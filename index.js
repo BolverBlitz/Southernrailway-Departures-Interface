@@ -1,7 +1,7 @@
 const request = require("request");
 const os = require('os');
 
-// https://ldb.fabdigital.uk/#/ldb/SN/XXX/to/XXX/departure
+// https://ldb.fabdigital.uk/#/ldb/SN/OXT/to/null/departure
 
 class Southernrail {
     /**
@@ -150,6 +150,11 @@ class Southernrail {
             if (this.debug) console.log(`getStopsList | Making POST request with CrsKey: ${CrsKey}`);
 
             const that = this;
+
+            const split_line = `-----------------------------${CrsKey}`;
+            const end_line = `-----------------------------${CrsKey}--`;
+            // generate the body of the request
+            let body_message = [];
             /*
                 https://ldb.fabdigital.uk/api/index.php?page=get_station_ref_data
                 -----------------------------129867355013474646961699968000
@@ -162,6 +167,16 @@ class Southernrail {
                 false
                 -----------------------------129867355013474646961699968000--
             */
+            body_message.push(split_line);
+            body_message.push(`Content-Disposition: form-data; name="page"`);
+            body_message.push(``);
+            body_message.push(`get_station_ref_data`);
+            body_message.push(split_line);
+            body_message.push(`Content-Disposition: form-data; name="showProgress"`);
+            body_message.push(``);
+            body_message.push(`false`);
+            body_message.push(end_line);
+
             this.#customHeaderRequest({
                 headers: {
                     'User-Agent': `${this.appName}/${this.appVersion} (NodeJS_${process.env.NODE_VERSION}) ${os.platform()} (${os.arch()}) NodeJS Wrapper`,
@@ -177,17 +192,7 @@ class Southernrail {
 
                 },
                 uri: `${this.api_url}api/index.php?page=get_station_ref_data`,
-                body: `
-                -----------------------------${CrsKey}
-                Content-Disposition: form-data; name="page"
-
-                get_station_ref_data
-                -----------------------------${CrsKey}
-                Content-Disposition: form-data; name="showProgress"
-
-                false
-                -----------------------------${CrsKey}--
-                `,
+                body: body_message.join("\n"),
                 method: 'POST'
             }, function (err, res, body) {
                 if (err) { reject(err); }
@@ -344,7 +349,6 @@ class Southernrail {
             const end_line = `-----------------------------${CrsKey}--`;
             // generate the body of the request
             let body_message = [];
-
             /*
                 https://ldb.fabdigital.uk/api/index.php?page=ldbws
                 -----------------------------68035893835696242651906085675
@@ -373,7 +377,6 @@ class Southernrail {
                 false
                 -----------------------------68035893835696242651906085675--
             */
-
             body_message.push(`${split_line}`);
 
             body_message.push(`Content-Disposition: form-data; name="page"`)
@@ -423,15 +426,94 @@ class Southernrail {
                     'Referer': `https://ldb.fabdigital.uk/`,
                     'Sec-Fetch-Dest': `empty`,
                     'Sec-Fetch-Mode': `cors`,
-                    'Sec-Fetch-Site': `same-origin`
-
+                    'Sec-Fetch-Site': `same-origin`,
                 },
                 uri: `${this.api_url}api/index.php?page=ldbws`,
                 body: body_message.join('\n'),
                 method: 'POST'
             }, function (err, res, body) {
                 if (err) { reject(err); }
-                resolve(body);
+                resolve(JSON.parse(body));
+            });
+        });
+    }
+
+    getRideDetails = (rid) => {
+        return new Promise(async (resolve, reject) => {
+            // Check if the lists are populated
+            if(!rid) reject("No rid provided");
+            if (this.#checkLists()) {
+                if (this.debug) console.log("getDepartures | Lists are not populated");
+                await this.#populateStopList(); // Wait for the list to be populated, then continue
+            }
+            const CrsKey = this.#generateCrsKey(24);
+            if (this.debug) console.log(`getDepartures | Making POST request with CrsKey: ${CrsKey}`);
+
+            const split_line = `-----------------------------${CrsKey}`;
+            const end_line = `-----------------------------${CrsKey}--`;
+            // generate the body of the request
+            let body_message = [];
+            /*
+            -----------------------------8370107505684882596408869
+            Content-Disposition: form-data; name="page"
+
+            ldbws
+            -----------------------------8370107505684882596408869
+            Content-Disposition: form-data; name="type"
+
+            service
+            -----------------------------8370107505684882596408869
+            Content-Disposition: form-data; name="rid"
+
+            ZDVmNTAwYjQ1ZmUzZDRjYjRlYjU1ZjQ4NWVmMjZmOTk3YWpCQnU3SUpVeHIyL2JZdlNCZEhnPT0=
+            -----------------------------8370107505684882596408869
+            Content-Disposition: form-data; name="showProgress"
+
+            false
+            -----------------------------8370107505684882596408869--
+            */
+            body_message.push(`${split_line}`);
+
+            body_message.push(`Content-Disposition: form-data; name="page"`)
+            body_message.push(``);
+            body_message.push(`ldbws`);
+            body_message.push(`${split_line}`);
+
+            body_message.push(`Content-Disposition: form-data; name="type"`);
+            body_message.push(``);
+            body_message.push(`service`);
+            body_message.push(`${split_line}`);
+
+            body_message.push(`Content-Disposition: form-data; name="rid"`);
+            body_message.push(``);
+            body_message.push(`${rid}`);
+            body_message.push(`${split_line}`);
+
+            body_message.push(`Content-Disposition: form-data; name="showProgress"`);
+            body_message.push(``);
+            body_message.push(`false`);
+            body_message.push(`${end_line}`);
+
+            this.#customHeaderRequest({
+                headers: {
+                    'User-Agent': `${this.appName}/${this.appVersion} (NodeJS_${process.env.NODE_VERSION}) ${os.platform()} (${os.arch()}) NodeJS Wrapper`,
+                    'Content-Type': `multipart/form-data; boundary=---------------------------${CrsKey}`,
+                    'Cookie': `PHPSESSID=${this.PHPSESSID}`,
+                    'Host': `ldb.fabdigital.uk`,
+                    'Origin': `https://ldb.fabdigital.uk`,
+                    'Cache-Control': `no-cache`,
+                    'Pragma': `no-cache`,
+                    'Referer': `https://ldb.fabdigital.uk/`,
+                    'Sec-Fetch-Dest': `empty`,
+                    'Sec-Fetch-Mode': `cors`,
+                    'Sec-Fetch-Site': `same-origin`,
+                },
+                uri: `${this.api_url}api/index.php?page=ldbws`,
+                body: body_message.join('\n'),
+                method: 'POST'
+            }, function (err, res, body) {
+                if (err) { reject(err); }
+                resolve(JSON.parse(body));
             });
         });
     }

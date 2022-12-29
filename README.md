@@ -45,3 +45,14 @@ getDepartures(String, String)
  }
 })();
 ```
+getRideDetails(String) - Get the ride details from a ride ID  
+```js
+(async function (){
+ try {
+   const Output = await southernrail.getRideDetails("<A ridKey>")
+   console.log(Output);
+ } catch (e) {
+   console.log(e)
+ }
+})();
+```
