@@ -51,7 +51,7 @@ class Southernrail {
         let firstDigit = Math.floor(Math.random() * 9) + 1;
         CrsKey += firstDigit;
         for (let i = 1; i < numDigits; i++) {
-            CrsKey += Math.floor(Math.random() * 10); 
+            CrsKey += Math.floor(Math.random() * 10);
         }
         return CrsKey;
     }
@@ -102,7 +102,7 @@ class Southernrail {
     #getPHPSESSID = (CrsKey) => {
         return new Promise((resolve, reject) => {
             if (!CrsKey) CrsKey = this.#generateCrsKey(24);
-            if (this.debug) console.log(`getPHPSESSID | Making POST request with CrsKey: ${CrsKey}`);
+            if (this.debug) console.log(`getPHPSESSID\t | Making POST request with CrsKey: ${CrsKey}`);
             this.#customHeaderRequest({
                 headers: {
                     'User-Agent': `${this.appName}/${this.appVersion} (NodeJS_${process.env.NODE_VERSION}) ${os.platform()} (${os.arch()}) NodeJS Wrapper`,
@@ -128,8 +128,8 @@ class Southernrail {
             }, (err, res, body) => {
                 if (err) reject(err);
                 if (res.statusCode !== 200) reject(res.statusCode);
-                if (this.debug) console.log(`getPHPSESSID | PHPSESSID: ${res.headers['set-cookie'][0].split(";")[0].split("=")[1]}`);
-                if (this.debug) console.log(`getPHPSESSID | Got status code: ${res.statusCode}`);
+                if (this.debug) console.log(`getPHPSESSID\t | PHPSESSID: ${res.headers['set-cookie'][0].split(";")[0].split("=")[1]}`);
+                if (this.debug) console.log(`getPHPSESSID\t | Got status code: ${res.statusCode}`);
                 this.PHPSESSID = res.headers['set-cookie'][0].split(";")[0].split("=")[1];
                 resolve();
             });
@@ -143,11 +143,11 @@ class Southernrail {
     #getStopsList = () => {
         return new Promise(async (resolve, reject) => {
             if (this.PHPSESSID === "") {
-                if (this.debug) console.log("getShortName | Lists are not populated");
+                if (this.debug) console.log("getShortName\t | Lists are not populated");
                 await this.#getPHPSESSID(); // Wait for our HPHPSESSID to be set
             }
             const CrsKey = this.#generateCrsKey(24);
-            if (this.debug) console.log(`getStopsList | Making POST request with CrsKey: ${CrsKey}`);
+            if (this.debug) console.log(`getStopsList\t | Making POST request with CrsKey: ${CrsKey}`);
 
             const that = this;
 
@@ -196,7 +196,7 @@ class Southernrail {
                 method: 'POST'
             }, function (err, res, body) {
                 if (err) { reject(err); }
-                if (that.debug) console.log(`getStopsList | Got status code: ${res.statusCode}`);
+                if (that.debug) console.log(`getStopsList\t | Got status code: ${res.statusCode}`);
                 resolve(body);
             });
         });
@@ -240,12 +240,12 @@ class Southernrail {
     getShortName = (LongName) => {
         return new Promise(async (resolve, reject) => {
             if (this.#checkLists()) {
-                if (this.debug) console.log("getShortName | Lists are not populated");
+                if (this.debug) console.log("getShortName\t | Lists are not populated");
                 await this.#populateStopList(); // Wait for the list to be populated, then continue
             }
 
             if (this.stopList_Long[LongName] === undefined) {
-                if (this.debug && this.autoRefresh) console.log("getShortName | Refereshing lists on next reuqest");
+                if (this.debug && this.autoRefresh) console.log("getShortName\t | Refereshing lists on next reuqest");
                 if (this.autoRefresh) { this.refreshNext = true; }
                 reject(`Stop "${LongName}" not found`);
             } else {
@@ -262,12 +262,12 @@ class Southernrail {
     getLongName = (ShortName) => {
         return new Promise(async (resolve, reject) => {
             if (this.#checkLists()) {
-                if (this.debug) console.log("getLongName | Lists are not populated");
+                if (this.debug) console.log("getLongName\t | Lists are not populated");
                 await this.#populateStopList(); // Wait for the list to be populated, then continue
             }
 
             if (this.stopList_Short[ShortName] === undefined) {
-                if (this.debug && this.autoRefresh) console.log("getLongName | Refereshing lists on next reuqest");
+                if (this.debug && this.autoRefresh) console.log("getLongName\t | Refereshing lists on next reuqest");
                 if (this.autoRefresh) { this.refreshNext = true; }
                 reject(`Stop "${ShortName}" not found`);
             } else {
@@ -286,7 +286,7 @@ class Southernrail {
     searchStops = (Stop, OutPutLength, MatchesOnly = false) => {
         return new Promise(async (resolve, reject) => {
             if (this.#checkLists()) {
-                if (this.debug) console.log("searchStops | Lists are not populated");
+                if (this.debug) console.log("searchStops\t | Lists are not populated");
                 await this.#populateStopList(); // Wait for the list to be populated, then continue
             }
             let s = [];
@@ -297,7 +297,7 @@ class Southernrail {
                 let hasmatched = MatchesOnly; // OVERRIDE: Only push result if a part or entire string matches
                 for (let i = 0; i < ArrayPart.length; i++) {
                     if (ArrayPart[i].toLowerCase() === Stop[st].toLowerCase()) {
-                        if (ArrayPart.includes(Stop)) {
+                        if (ArrayPart.toLowerCase().includes(Stop.toLowerCase())) {
                             hasmatched = true;
                             t++;
                             if (st < Stop.length - 1) {
@@ -314,11 +314,12 @@ class Southernrail {
                 if (hasmatched) s.push(temp) // Only push fully matched, if enabled.
             });
             s.sort((a, b) => (a.p > b.p) ? -1 : 1); // Sort by p
+            console.log(s)
             s.map(SP => {
                 o.push(SP.a)
             });
             if (o.length === 0) {
-                if (this.debug && this.autoRefresh) console.log("searchStops | Refereshing lists on next reuqest");
+                if (this.debug && this.autoRefresh) console.log("searchStops\t | Refereshing lists on next reuqest");
                 if (this.autoRefresh) { this.refreshNext = true; }
             }
             resolve(o.slice(0, OutPutLength))
@@ -335,13 +336,13 @@ class Southernrail {
         return new Promise(async (resolve, reject) => {
             // Check if the lists are populated
             if (this.#checkLists()) {
-                if (this.debug) console.log("getDepartures | Lists are not populated");
+                if (this.debug) console.log("getDepartures\t | Lists are not populated");
                 await this.#populateStopList(); // Wait for the list to be populated, then continue
             }
             const CrsKey = this.#generateCrsKey(24);
-            if (this.debug) console.log(`getDepartures | Making POST request with CrsKey: ${CrsKey}`);
+            if (this.debug) console.log(`getDepartures\t | Making POST request with CrsKey: ${CrsKey}`);
 
-            if(this.#getcrsKey(from) === "Not Found") reject(`Stop "${from}" not found`);
+            if (this.#getcrsKey(from) === "Not Found") reject(`Stop "${from}" not found`);
 
             const tocrsKey = this.#getcrsKey(to);
 
@@ -394,7 +395,7 @@ class Southernrail {
             body_message.push(`${this.#getcrsKey(from)}`);
 
             if (to !== undefined) {
-                if(this.#getcrsKey(to) === "Not Found") reject(`Stop "${to}" not found`); 
+                if (this.#getcrsKey(to) === "Not Found") reject(`Stop "${to}" not found`);
 
                 body_message.push(`${split_line}`);
                 body_message.push(`Content-Disposition: form-data; name="direction"`);
@@ -441,13 +442,13 @@ class Southernrail {
     getRideDetails = (rid) => {
         return new Promise(async (resolve, reject) => {
             // Check if the lists are populated
-            if(!rid) reject("No rid provided");
+            if (!rid) reject("No rid provided");
             if (this.#checkLists()) {
-                if (this.debug) console.log("getDepartures | Lists are not populated");
+                if (this.debug) console.log("getDepartures\t | Lists are not populated");
                 await this.#populateStopList(); // Wait for the list to be populated, then continue
             }
             const CrsKey = this.#generateCrsKey(24);
-            if (this.debug) console.log(`getDepartures | Making POST request with CrsKey: ${CrsKey}`);
+            if (this.debug) console.log(`getDepartures\t | Making POST request with CrsKey: ${CrsKey}`);
 
             const split_line = `-----------------------------${CrsKey}`;
             const end_line = `-----------------------------${CrsKey}--`;
