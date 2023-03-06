@@ -1,6 +1,6 @@
 {
   "name": "southernrailwayinterface",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Get live departures from southern railway in a json format",
   "main": "index.js",
   "scripts": {

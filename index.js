@@ -22,7 +22,7 @@ class Southernrail {
         this.debug = false;
         this.refreshNext = false;
         this.appName = "Southernrail_Interface";
-        this.appVersion = "0.0.1";
+        this.appVersion = "0.0.3";
     };
 
     #customHeaderRequest = request.defaults({
