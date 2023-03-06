@@ -22,7 +22,7 @@ class Southernrail {
         this.debug = false;
         this.refreshNext = false;
         this.appName = "Southernrail_Interface";
-        this.appVersion = "0.0.3";
+        this.appVersion = "0.0.4";
     };
 
     #customHeaderRequest = request.defaults({
@@ -314,7 +314,6 @@ class Southernrail {
                 if (hasmatched) s.push(temp) // Only push fully matched, if enabled.
             });
             s.sort((a, b) => (a.p > b.p) ? -1 : 1); // Sort by p
-            console.log(s)
             s.map(SP => {
                 o.push(SP.a)
             });
